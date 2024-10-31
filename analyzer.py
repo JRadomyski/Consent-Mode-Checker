@@ -14,9 +14,6 @@ class ConsentModeChecker:
         os.system('cls' if os.name == 'nt' else 'clear')
 
     def check_consent_mode(self, url: str) -> Dict[str, Any]:
-        """
-        Sprawdza implementację Consent Mode na stronie z ulepszonymi metodami detekcji.
-        """
         if not url.startswith(('http://', 'https://')):
             url = 'https://' + url
             
@@ -37,7 +34,6 @@ class ConsentModeChecker:
             response = requests.get(url, headers=headers, timeout=10)
             content = response.text
             
-            # 1. Sprawdzanie różnych wariantów GTM
             gtm_patterns = [
                 r'googletagmanager\.com/gtm\.js',
                 r'www\.googletagmanager\.com/gtm\.js',
@@ -52,7 +48,6 @@ class ConsentModeChecker:
                     results['implementation_type'].append('GTM')
                     break
 
-            # 2. Sprawdzanie różnych wariantów gtag.js
             gtag_patterns = [
                 r'googletagmanager\.com/gtag/js',
                 r'gtag\s*\(\s*[\'"]js[\'"]\s*,\s*[\'"]config[\'"]',
@@ -66,26 +61,17 @@ class ConsentModeChecker:
                     results['implementation_type'].append('GTAG')
                     break
 
-            # 3. Sprawdzanie różnych wariantów Consent Mode
             consent_patterns = [
-                # Standardowa implementacja
                 r"gtag\s*\(\s*['\"]consent['\"]",
-                # Implementacja przez dataLayer
                 r"dataLayer\.push\s*\(\s*\[\s*['\"]consent['\"]",
-                # Implementacja przez obiekt window
                 r"window\.gtag\s*\(\s*['\"]consent['\"]",
-                # Implementacja domyślnych ustawień
                 r"'default',\s*{[^}]*'ad_storage':",
-                # Implementacja aktualizacji zgód
                 r"'update',\s*{[^}]*'ad_storage':",
-                # Alternatywne implementacje
                 r"gtag\.consent\s*=",
                 r"gtagSet\s*\(\s*['\"]consent['\"]",
-                # CMP implementations
                 r"OneTrust\.InsertHtml",
                 r"CookieConsent",
                 r"__tcfapi",
-                # Consent Mode v2
                 r"consent_mode_v2",
                 r"'functionality_storage':",
                 r"'security_storage':",
@@ -93,13 +79,11 @@ class ConsentModeChecker:
                 r"'analytics_storage':",
             ]
 
-            # Sprawdzanie wzorców Consent Mode
             for pattern in consent_patterns:
                 if re.search(pattern, content, re.IGNORECASE):
                     results['consent_mode_detected'] = True
                     results['consent_api_calls'].append(pattern)
 
-            # 4. Sprawdzanie domyślnych ustawień
             default_settings_patterns = [
                 r"gtag\s*\(\s*['\"]consent['\"]\s*,\s*['\"]default['\"]\s*,\s*({[^}]+})",
                 r"dataLayer\.push\s*\(\s*\[\s*['\"]consent['\"]\s*,\s*['\"]default['\"]\s*,\s*({[^}]+})\s*\]",
@@ -111,7 +95,6 @@ class ConsentModeChecker:
                 if match:
                     try:
                         settings_str = match.group(1).replace("'", '"')
-                        # Czyszczenie string z komentarzy i białych znaków
                         settings_str = re.sub(r'//.*?\n|/\*.*?\*/', '', settings_str)
                         default_settings = json.loads(settings_str)
                         results['default_settings'] = default_settings
@@ -119,7 +102,6 @@ class ConsentModeChecker:
                     except json.JSONDecodeError:
                         continue
 
-            # 5. Analiza problemów
             if not results['consent_mode_detected']:
                 results['issues'].append("Nie wykryto konfiguracji Consent Mode")
             if not (results['gtm_detected'] or results['gtag_detected']):
@@ -133,7 +115,6 @@ class ConsentModeChecker:
                         f"Brak wymaganych ustawień: {', '.join(missing_settings)}"
                     )
 
-            # Remove duplicates from implementation_type
             results['implementation_type'] = list(set(results['implementation_type']))
                 
         except requests.RequestException as e:
@@ -144,9 +125,6 @@ class ConsentModeChecker:
         return results
 
     def print_results(self):
-        """
-        Wyświetla wyniki ostatniej analizy.
-        """
         if not self.last_results:
             print("\nBrak wyników do wyświetlenia. Najpierw wykonaj analizę strony.")
             return
@@ -176,9 +154,6 @@ class ConsentModeChecker:
                 print(f"- {issue}")
 
     def export_results(self, filename: str):
-        """
-        Eksportuje wyniki do pliku JSON.
-        """
         if not self.last_results:
             print("\nBrak wyników do eksportu. Najpierw wykonaj analizę strony.")
             return
@@ -194,9 +169,6 @@ class ConsentModeChecker:
             print(f"\nBłąd podczas eksportu wyników: {str(e)}")
 
     def display_menu(self):
-        """
-        Wyświetla główne menu aplikacji.
-        """
         while True:
             self.clear_screen()
             print("=== Consent Mode Checker ===")
