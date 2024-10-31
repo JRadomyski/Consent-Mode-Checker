@@ -3,7 +3,7 @@ import json
 import re
 import os
 from typing import Dict, Any
-from urllib.parse import urlparse
+
 
 class ConsentModeChecker:
     def __init__(self):
@@ -200,7 +200,7 @@ class ConsentModeChecker:
                     input("\nNaciśnij Enter, aby kontynuować...")
             
             elif choice == '4':
-                print("\nDo widzenia!")
+                print("\nZamykanie...")
                 break
             
             else:
